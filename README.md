@@ -70,7 +70,7 @@ npm run dev
 ## 📁 Estrutura do Projeto
 
 ```
-Prudencia/
+prudencia/
 ├── client/                 # Frontend React
 │   ├── src/
 │   │   ├── components/    # Componentes UI reutilizáveis
