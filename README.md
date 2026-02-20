@@ -1,96 +1,99 @@
-# 💰 Prudência
+# Prudência
 
-> Aplicação web moderna para controle financeiro pessoal com design intuitivo e analytics visuais.
+> A modern web application for personal financial control with intuitive design and visual analytics.
 
-🚧 **Status**: Em Desenvolvimento Ativo
-
----
-
-## ✅ Funcionalidades Implementadas
-
-- 📊 **Gestão de Transações** - Controle completo de receitas e despesas
-- 📈 **Analytics Visuais** - Gráficos interativos para entender seus gastos
-- 📱 **Design Responsivo** - Interface mobile-first que funciona em qualquer dispositivo
-- 🎨 **UI Moderna** - Construída com shadcn/ui e Tailwind CSS
-- 💳 **Categorias Inteligentes** - Organize despesas por categorias específicas
-- 📅 **Filtros por Período** - Visualize dados dos últimos 7d, 30d, 3m ou 1a
-
-## 🚧 Em Desenvolvimento
-
-- 🔐 **Autenticação de Usuário**
-- ☁️ **Sincronização na Nuvem**
-- 🌙 **Modo Escuro**
-- 📤 **Funcionalidade de Exportação**
-- 🎯 **Metas de Orçamento**
-- 🔄 **Transações Recorrentes**
+**Status**: Active Development
 
 ---
 
-## 🛠 Stack Tecnológico
+## Implemented Features
+
+- **Transaction Management** - Complete control of income and expenses
+- **Visual Analytics** - Interactive charts to understand your spending
+- **Responsive Design** - Mobile-first interface that works on any device
+- **Modern UI** - Built with shadcn/ui and Tailwind CSS
+- **Smart Categories** - Organize expenses by specific categories
+- **Period Filters** - View data from last 7d, 30d, 3m or 1y
+- **User Authentication** - Secure login system with Supabase
+- **Cloud Sync** - Real-time data synchronization
+- **Dashboard Insights** - Smart financial insights and month-over-month comparisons
+
+## In Development
+
+- **Dark Mode** - Theme switching capability
+- **Export Functionality** - CSV/PDF export options
+- **Budget Goals** - Set and track budget targets
+- **Recurring Transactions** - Automated recurring payments
+
+---
+
+## Tech Stack
 
 ### Frontend
-- **React 19** + **TypeScript** - Interface reativa e type-safe
-- **Vite** - Build tool ultra-rápido
-- **Tailwind CSS** - Estilização utilitária
-- **shadcn/ui** - Componentes UI de alta qualidade
-- **Recharts** - Biblioteca de gráficos
-- **Wouter** - Router leve e simples
+- **React 19** + **TypeScript** - Reactive and type-safe interface
+- **Vite** - Ultra-fast build tool
+- **Tailwind CSS** - Utility-first styling
+- **shadcn/ui** - High-quality UI components
+- **Recharts** - Charting library
+- **Wouter** - Lightweight router
+- **Supabase Auth** - Authentication system
 
 ### Backend
-- **Express** + **TypeScript** - API robusta
-- **Drizzle ORM** - ORM type-safe
-- **PostgreSQL** - Banco de dados (configurável)
+- **Express** + **TypeScript** - Robust API
+- **Drizzle ORM** - Type-safe ORM
+- **PostgreSQL** - Database (configurable)
 
-### Ferramentas
-- **Lucide React** - Ícones consistentes
-- **date-fns** - Manipulação de datas
-- **Vaul** - Componentes de drawer/modal
+### Tools
+- **Lucide React** - Consistent icons
+- **date-fns** - Date manipulation
+- **Vaul** - Drawer/modal components
+- **React Query** - Data fetching and state management
 
 ---
 
-## 🚀 Guia Rápido
+## Quick Start
 
 ```bash
-# Clone o repositório
+# Clone the repository
 git clone https://github.com/prudentium/prudencia.git
 cd prudencia
 
-# Instale as dependências
+# Install dependencies
 npm install
 
-# Execute o servidor de desenvolvimento
+# Start development server
 npm run dev
 
-# Abra seu navegador
-# Navegue para http://localhost:3000
+# Open your browser
+# Navigate to http://localhost:3000
 ```
 
-## ☁️ Deploy frontend-only (Vercel + Supabase)
+## Cloud Deploy (Vercel + Supabase)
 
-Este projeto está configurado para deploy **somente frontend** no Vercel (`vercel.json`) usando Vite.
+This project is configured for **frontend-only** deployment on Vercel (`vercel.json`) using Vite.
 
-### 1) Pegar credenciais no Supabase
+### 1) Get Supabase Credentials
 
-No painel do Supabase, vá em **Project Settings → API** e copie:
+In your Supabase dashboard, go to **Project Settings → API** and copy:
 
 - `Project URL` → `VITE_SUPABASE_URL`
 - `anon public key` → `VITE_SUPABASE_ANON_KEY`
 
-### 2) Configurar variáveis no Vercel
+### 2) Configure Vercel Environment Variables
 
-No projeto do Vercel (importado do GitHub), adicione em **Environment Variables**:
+In your Vercel project (imported from GitHub), add these in **Environment Variables**:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 
-### 3) Build/Output usados no Vercel
+### 3) Build/Output Configuration for Vercel
 
 - `buildCommand`: `npm run build:frontend`
 - `outputDirectory`: `dist/public`
 
-### 4) Estrutura mínima da tabela `transactions`
+### 4) Minimum `transactions` table structure
 
-Use esta estrutura no Supabase para o app funcionar:
+Use this structure in Supabase for the app to work:
 
 ```sql
 create table if not exists public.transactions (
@@ -104,68 +107,68 @@ create table if not exists public.transactions (
 );
 ```
 
-> Segurança: não use `service_role` no frontend. Use somente a `anon key` com RLS configurado.
+> Security: Do not use `service_role` in the frontend. Use only the `anon key` with RLS configured.
 
 ---
 
-## 📁 Estrutura do Projeto
+## Project Structure
 
 ```
 prudencia/
-├── client/                 # Frontend React
+├── client/                 # React Frontend
 │   ├── src/
-│   │   ├── components/    # Componentes UI reutilizáveis
-│   │   ├── pages/        # Componentes de página
-│   │   ├── lib/          # Utilitários e dados mock
-│   │   └── hooks/        # Hooks React customizados
-├── server/               # Backend Express
-│   ├── index.ts         # Arquivo principal do servidor
-│   ├── routes/          # Rotas da API
-│   └── static/          # Serviço de arquivos estáticos
-├── shared/              # Tipos compartilhados
-└── drizzle.config.ts    # Configuração do banco
+│   │   ├── components/    # Reusable UI components
+│   │   ├── pages/        # Page components
+│   │   ├── lib/          # Utilities and data
+│   │   └── hooks/        # Custom React hooks
+├── server/               # Express Backend
+│   ├── index.ts         # Main server file
+│   ├── routes/          # API routes
+│   └── static/          # Static file service
+├── shared/              # Shared types
+└── drizzle.config.ts    # Database configuration
 ```
 
 ---
 
-## ⚡ Scripts Disponíveis
+## Available Scripts
 
-| Script | Descrição |
+| Script | Description |
 |--------|-----------|
-| `npm run dev` | Inicia servidor de desenvolvimento |
-| `npm run build` | Build para produção |
-| `npm run start` | Inicia servidor de produção |
-| `npm run check` | Verificação de tipos TypeScript |
-| `npm run db:push` | Migrações do banco de dados |
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
+| `npm run check` | TypeScript type checking |
+| `npm run db:push` | Database migrations |
 
 ---
 
-## 📊 Status do Desenvolvimento
+## Development Status
 
-- 🚧 **Status**: Em desenvolvimento ativo
-- 📝 **Última atualização**: 19/02/2026
-- 🔄 **Foco atual**: Refinamento da UI e organização do código
-
----
-
-## 📝 Notas do Desenvolvedor
-
-Este é um projeto privado para organização e desenvolvimento pessoal. O código está sendo versionado no GitHub para acompanhamento do progresso e backup.
+- **Status**: Active development
+- **Last updated**: February 19, 2026
+- **Current focus**: UI refinement and code organization
 
 ---
 
-## 🎯 Próximos Passos
+## Developer Notes
 
-- [ ] Finalizar estrutura de categorias
-- [ ] Implementar autenticação
-- [ ] Configurar banco de dados persistente
-- [ ] Adicionar mais visualizações de dados
-- [ ] Otimizar performance mobile
-- [ ] Implementar modo escuro
-- [ ] Adicionar exportação CSV/PDF
+This is a private project for personal organization and development. The code is versioned on GitHub for progress tracking and backup.
 
 ---
 
-## 📄 Licença
+## Next Steps
 
-MIT License - consulte o arquivo [LICENSE](LICENSE) para detalhes.
+- [ ] Finalize category structure
+- [ ] Implement dark mode
+- [ ] Add export CSV/PDF functionality
+- [ ] Optimize mobile performance
+- [ ] Add more data visualizations
+- [ ] Implement budget goals
+- [ ] Add recurring transactions
+
+---
+
+## License
+
+MIT License - see the [LICENSE](LICENSE) file for details.
