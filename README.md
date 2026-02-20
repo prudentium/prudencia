@@ -2,7 +2,7 @@
 
 > Aplicativo web de controle financeiro pessoal com design minimalista, experiência mobile-first e sincronização em nuvem via Supabase.
 
-**Status**: Em desenvolvimento ativo · **Versão**: 1.0.0 (Beta)
+**Status**: Em desenvolvimento ativo · **Versão**: 1.0.1 (Beta)
 
 ---
 
@@ -263,7 +263,6 @@ O `vercel.json` já inclui rewrite para SPA (`/* → /index.html`), então todas
 ## Notas de desenvolvimento
 
 - O app funciona **sem Supabase configurado**: cai automaticamente para dados locais (`localStorage`) com transações de exemplo.
-- O orçamento mensal nunca armazena percentuais — apenas o valor absoluto em BRL.
 - Domínios de e-mail aceitos no cadastro: `gmail.com`, `outlook.com`, `hotmail.com`, `live.com`, `icloud.com`, `me.com`, `yahoo.com`.
 
 ---
