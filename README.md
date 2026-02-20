@@ -36,18 +36,19 @@
 - **shadcn/ui** - High-quality UI components
 - **Recharts** - Charting library
 - **Wouter** - Lightweight router
-- **Supabase Auth** - Authentication system
+- **React Query** - Data fetching and state management
 
-### Backend
-- **Express** + **TypeScript** - Robust API
-- **Drizzle ORM** - Type-safe ORM
-- **PostgreSQL** - Database (configurable)
+### Backend & Database
+- **Supabase** - Complete backend-as-a-service
+  - Authentication system
+  - PostgreSQL database
+  - Real-time data synchronization
+  - Row Level Security (RLS)
 
 ### Tools
 - **Lucide React** - Consistent icons
 - **date-fns** - Date manipulation
 - **Vaul** - Drawer/modal components
-- **React Query** - Data fetching and state management
 
 ---
 
@@ -118,15 +119,13 @@ prudencia/
 ├── client/                 # React Frontend
 │   ├── src/
 │   │   ├── components/    # Reusable UI components
-│   │   ├── pages/        # Page components
-│   │   ├── lib/          # Utilities and data
+│   │   ├── pages/        # Page components (Dashboard, Transactions, etc.)
+│   │   ├── lib/          # Utilities, Supabase client, data stores
 │   │   └── hooks/        # Custom React hooks
-├── server/               # Express Backend
-│   ├── index.ts         # Main server file
-│   ├── routes/          # API routes
-│   └── static/          # Static file service
+├── public/               # Static assets
 ├── shared/              # Shared types
-└── drizzle.config.ts    # Database configuration
+├── vercel.json         # Vercel deployment configuration
+└── package.json        # Dependencies and scripts
 ```
 
 ---
@@ -135,11 +134,9 @@ prudencia/
 
 | Script | Description |
 |--------|-----------|
-| `npm run dev` | Start development server |
-| `npm run build` | Production build |
-| `npm run start` | Start production server |
+| `npm run dev:client` | Start frontend development server |
+| `npm run build:frontend` | Build for production |
 | `npm run check` | TypeScript type checking |
-| `npm run db:push` | Database migrations |
 
 ---
 
