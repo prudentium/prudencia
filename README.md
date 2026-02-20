@@ -65,6 +65,47 @@ npm run dev
 # Navegue para http://localhost:3000
 ```
 
+## ☁️ Deploy frontend-only (Vercel + Supabase)
+
+Este projeto está configurado para deploy **somente frontend** no Vercel (`vercel.json`) usando Vite.
+
+### 1) Pegar credenciais no Supabase
+
+No painel do Supabase, vá em **Project Settings → API** e copie:
+
+- `Project URL` → `VITE_SUPABASE_URL`
+- `anon public key` → `VITE_SUPABASE_ANON_KEY`
+
+### 2) Configurar variáveis no Vercel
+
+No projeto do Vercel (importado do GitHub), adicione em **Environment Variables**:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+### 3) Build/Output usados no Vercel
+
+- `buildCommand`: `npm run build:frontend`
+- `outputDirectory`: `dist/public`
+
+### 4) Estrutura mínima da tabela `transactions`
+
+Use esta estrutura no Supabase para o app funcionar:
+
+```sql
+create table if not exists public.transactions (
+  id uuid primary key default gen_random_uuid(),
+  amount numeric not null,
+  description text not null,
+  category_id text not null,
+  date timestamptz not null,
+  type text not null check (type in ('income', 'expense')),
+  created_at timestamptz not null default now()
+);
+```
+
+> Segurança: não use `service_role` no frontend. Use somente a `anon key` com RLS configurado.
+
 ---
 
 ## 📁 Estrutura do Projeto

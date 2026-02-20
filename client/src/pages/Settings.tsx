@@ -7,7 +7,15 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export default function Settings() {
+interface SettingsProps {
+  userName?: string;
+  userEmail?: string;
+  onLogout?: () => void | Promise<void>;
+}
+
+export default function Settings({ userName, userEmail, onLogout }: SettingsProps) {
+  const displayName = userName?.trim() || "Jane Doe";
+
   return (
     <div className="space-y-6 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header className="mb-6">
@@ -23,8 +31,8 @@ export default function Settings() {
             <AvatarFallback>JD</AvatarFallback>
           </Avatar>
           <div className="flex flex-col gap-0.5 min-w-0">
-            <h2 className="text-base font-bold leading-tight">Jane Doe</h2>
-            <p className="text-xs text-muted-foreground truncate">jane.doe@example.com</p>
+            <h2 className="text-base font-bold leading-tight">{displayName}</h2>
+            <p className="text-xs text-muted-foreground truncate">{userEmail || "jane.doe@example.com"}</p>
             <Button variant="link" className="p-0 h-auto text-primary text-xs w-fit mt-0.5">Editar perfil</Button>
           </div>
         </CardContent>
@@ -168,7 +176,11 @@ export default function Settings() {
         </section>
 
         <div className="pt-4 flex flex-col items-center gap-4">
-          <Button variant="ghost" className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 text-xs font-semibold gap-2">
+          <Button
+            variant="ghost"
+            onClick={onLogout}
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/5 text-xs font-semibold gap-2"
+          >
             Logout
           </Button>
           <p className="text-center text-[10px] text-muted-foreground font-medium">Versão 1.0.0 (Beta)</p>

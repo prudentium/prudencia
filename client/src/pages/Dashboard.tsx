@@ -1,173 +1,234 @@
-import { useState } from "react";
-import { Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from "recharts";
-import { ArrowDown, ArrowUp, Wallet } from "lucide-react";
-import { subDays, subMonths, subYears, startOfDay } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo } from "react";
+import { ArrowDown, ArrowUp, Bell, Lightbulb, TrendingDown, Wallet } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Transaction, getCategory } from "@/lib/mockData";
 import { cn, formatCurrency, formatShortDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Bom dia";
+  if (hour < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
 interface DashboardProps {
   transactions: Transaction[];
+  userName?: string;
+  userAvatarUrl?: string;
 }
 
-const PERIODS = [
-  { label: "7d", days: 7 },
-  { label: "30d", days: 30 },
-  { label: "3m", months: 3 },
-  { label: "1a", years: 1 },
-] as const;
+export default function Dashboard({ transactions, userName, userAvatarUrl }: DashboardProps) {
+  const displayName = userName?.trim() || "Jane";
+  const initials = displayName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
-type PeriodLabel = typeof PERIODS[number]["label"];
-
-function getPeriodFrom(label: PeriodLabel): Date {
-  const now = new Date();
-  if (label === "7d") return startOfDay(subDays(now, 7));
-  if (label === "30d") return startOfDay(subDays(now, 30));
-  if (label === "3m") return startOfDay(subMonths(now, 3));
-  return startOfDay(subYears(now, 1));
-}
-
-export default function Dashboard({ transactions }: DashboardProps) {
-  const [activePeriod, setActivePeriod] = useState<PeriodLabel>("30d");
-  
-  const periodFrom = getPeriodFrom(activePeriod);
-  const filtered = transactions.filter(t => new Date(t.date) >= periodFrom);
+  const avatarSrc = userAvatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayName)}`;
 
   // Calculate Totals
-  const totalIncome = filtered
+  const totalIncome = transactions
     .filter(t => t.type === "income")
     .reduce((acc, t) => acc + t.amount, 0);
     
-  const totalExpense = filtered
+  const totalExpense = transactions
     .filter(t => t.type === "expense")
     .reduce((acc, t) => acc + t.amount, 0);
 
   const balance = totalIncome - totalExpense;
 
-  const expenseByCategory = filtered
-    .filter(t => t.type === "expense")
-    .reduce((acc: any[], t) => {
-      const cat = getCategory(t.categoryId);
-      const existing = acc.find(c => c.name === cat.name);
-      if (existing) {
-        existing.value += t.amount;
-      } else {
-        acc.push({ name: cat.name, value: t.amount, color: cat.color });
-      }
-      return acc;
-    }, [])
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 5); // Top 5
+  // Smart Insights: month-over-month comparison
+  const insights = useMemo(() => {
+    const now = new Date();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
-  const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088fe'];
+    const thisMonthExpenses = transactions
+      .filter(t => t.type === "expense" && new Date(t.date) >= thisMonthStart)
+      .reduce((acc, t) => acc + t.amount, 0);
+
+    const lastMonthExpenses = transactions
+      .filter(t => t.type === "expense" && new Date(t.date) >= lastMonthStart && new Date(t.date) <= lastMonthEnd)
+      .reduce((acc, t) => acc + t.amount, 0);
+
+    const monthlyBudget = 5000;
+    const budgetUsed = thisMonthExpenses;
+    const budgetPercent = Math.min(Math.round((budgetUsed / monthlyBudget) * 100), 100);
+
+    let savingsPercent = 0;
+    let isSaving = true;
+    if (lastMonthExpenses > 0) {
+      const diff = lastMonthExpenses - thisMonthExpenses;
+      savingsPercent = Math.abs(Math.round((diff / lastMonthExpenses) * 100));
+      isSaving = diff > 0;
+    }
+
+    // Top spending category this month
+    const categorySpending: Record<string, number> = {};
+    transactions
+      .filter(t => t.type === "expense" && new Date(t.date) >= thisMonthStart)
+      .forEach(t => {
+        categorySpending[t.categoryId] = (categorySpending[t.categoryId] || 0) + t.amount;
+      });
+    const topCategoryId = Object.entries(categorySpending).sort((a, b) => b[1] - a[1])[0]?.[0];
+    const topCategory = topCategoryId ? getCategory(topCategoryId) : null;
+
+    return { thisMonthExpenses, lastMonthExpenses, savingsPercent, isSaving, monthlyBudget, budgetUsed, budgetPercent, topCategory };
+  }, [transactions]);
 
   return (
     <div className="space-y-4 pb-24 animate-in fade-in duration-500 max-w-lg mx-auto">
-      {/* Header: greeting + period filter */}
-      <div className="flex items-start justify-between pt-4 px-1">
-        <div>
-          <p className="text-xs text-muted-foreground font-medium">Bem-vindo 👋</p>
-          <h1 className="text-xl font-bold tracking-tight text-foreground leading-tight">Jane</h1>
+      {/* Greeting Header */}
+      <div className="flex items-center justify-between pt-2 px-1">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-11 w-11 ring-2 ring-primary/20 shadow-sm">
+            <AvatarImage src={avatarSrc} alt={displayName} />
+            <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">{initials}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p className="text-xs text-muted-foreground font-medium">{getGreeting()} 👋</p>
+            <h1 className="text-base font-bold tracking-tight text-foreground leading-tight">{displayName}</h1>
+          </div>
         </div>
-        <div className="flex items-center gap-1 mt-1">
-          {PERIODS.map((p) => (
-            <Button
-              key={p.label}
-              variant="ghost"
-              size="sm"
-              onClick={() => setActivePeriod(p.label)}
-              className={cn(
-                "h-7 rounded-full px-2.5 text-[10px] font-semibold transition-colors",
-                activePeriod === p.label
-                  ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                  : "text-muted-foreground hover:bg-secondary/50"
-              )}
-            >
-              {p.label}
-            </Button>
-          ))}
-        </div>
+        <Button variant="ghost" size="icon" className="rounded-full h-10 w-10 text-muted-foreground hover:text-foreground hover:bg-secondary/60">
+          <Bell className="w-5 h-5" />
+        </Button>
       </div>
 
-      {/* Balance */}
-      <div className="px-1">
-        <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Seu Saldo</p>
-        <div className="text-3xl font-bold tracking-tight text-foreground truncate max-w-full">
+      {/* Balance Card */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-purple-500 to-violet-600 p-5 pb-5 shadow-lg">
+        {/* Decorative wallet icon */}
+        <div className="absolute top-4 right-4 opacity-20">
+          <Wallet className="w-16 h-16 text-white" />
+        </div>
+        {/* Decorative circles */}
+        <div className="absolute -top-8 -left-8 w-32 h-32 rounded-full bg-white/10" />
+        <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-white/5" />
+
+        <p className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-1">Saldo total</p>
+        <h2 className="text-3xl font-bold text-white tracking-tight truncate mb-4">
           {formatCurrency(balance)}
-        </div>
-      </div>
+        </h2>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-2.5">
-        <div className="bg-white dark:bg-card rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
-          <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-xl text-green-600 shrink-0">
-            <ArrowUp className="w-3.5 h-3.5" />
+        {/* Income / Expense inside the card */}
+        <div className="grid grid-cols-2 gap-3 relative z-10">
+          <div className="bg-white/15 backdrop-blur-sm rounded-2xl px-3.5 py-2.5 flex items-center gap-2.5">
+            <div className="p-1.5 bg-white/20 rounded-lg shrink-0">
+              <ArrowUp className="w-3.5 h-3.5 text-green-300" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[9px] text-white/60 font-semibold uppercase tracking-tight block">Receitas</span>
+              <span className="text-sm font-bold text-white truncate block">{formatCurrency(totalIncome)}</span>
+            </div>
           </div>
-          <div className="min-w-0">
-            <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-tight block">Receita</span>
-            <span className="text-sm font-bold text-green-600 truncate block">{formatCurrency(totalIncome)}</span>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-card rounded-2xl px-4 py-3 flex items-center gap-3 shadow-sm">
-          <div className="p-2 bg-red-50 dark:bg-red-900/20 rounded-xl text-red-500 shrink-0">
-            <ArrowDown className="w-3.5 h-3.5" />
-          </div>
-          <div className="min-w-0">
-            <span className="text-[9px] text-muted-foreground font-semibold uppercase tracking-tight block">Despesa</span>
-            <span className="text-sm font-bold text-red-500 truncate block">{formatCurrency(totalExpense)}</span>
+          <div className="bg-white/15 backdrop-blur-sm rounded-2xl px-3.5 py-2.5 flex items-center gap-2.5">
+            <div className="p-1.5 bg-white/20 rounded-lg shrink-0">
+              <ArrowDown className="w-3.5 h-3.5 text-red-300" />
+            </div>
+            <div className="min-w-0">
+              <span className="text-[9px] text-white/60 font-semibold uppercase tracking-tight block">Despesas</span>
+              <span className="text-sm font-bold text-white truncate block">{formatCurrency(totalExpense)}</span>
+            </div>
           </div>
         </div>
       </div>
-      {/* Main Chart Card */}
-      <Card className="shadow-premium border-none bg-white dark:bg-card pt-2">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Gastos por Categoria</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[240px] w-full flex items-center justify-center relative">
-             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={expenseByCategory}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={75}
-                  outerRadius={95}
-                  paddingAngle={8}
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {expenseByCategory.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                  formatter={(value: number) => [value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }), '']}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-               <div className="text-center">
-                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest block font-bold">Total</span>
-                 <span className="text-xl font-bold">{formatCurrency(totalExpense)}</span>
-               </div>
-             </div>
-          </div>
-          {/* Legend */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-3 mt-6">
-            {expenseByCategory.map((entry, index) => (
-              <div key={index} className="flex items-center gap-2.5 text-xs">
-                <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                <span className="truncate font-medium text-muted-foreground">{entry.name}</span>
-                <span className="ml-auto font-bold">{Math.round((entry.value / totalExpense) * 100)}%</span>
+      {/* Smart Insights */}
+      <section className="space-y-3">
+        <div className="flex justify-between items-center px-1">
+          <h2 className="text-lg font-bold tracking-tight">Insights Inteligentes</h2>
+          <Link href="/categories">
+            <Button variant="ghost" size="sm" className="text-xs text-primary font-bold hover:bg-transparent px-0">Ver tudo</Button>
+          </Link>
+        </div>
+
+        {/* Savings Insight */}
+        <Card className="shadow-sm border-none bg-white dark:bg-card overflow-hidden">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className={cn(
+                "p-2.5 rounded-xl shrink-0 shadow-sm",
+                insights.isSaving
+                  ? "bg-gradient-to-br from-purple-500 to-violet-600 text-white"
+                  : "bg-gradient-to-br from-orange-400 to-red-500 text-white"
+              )}>
+                {insights.isSaving ? <TrendingDown className="w-4 h-4" /> : <ArrowUp className="w-4 h-4" />}
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-foreground">
+                  {insights.isSaving ? "Economia este mês" : "Atenção aos gastos"}
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed mt-0.5">
+                  {insights.lastMonthExpenses > 0 ? (
+                    insights.isSaving ? (
+                      <>Você gastou <span className="font-bold text-foreground">{insights.savingsPercent}% menos</span> que no mês passado. Continue assim!</>
+                    ) : (
+                      <>Você gastou <span className="font-bold text-foreground">{insights.savingsPercent}% mais</span> que no mês passado. Fique atento!</>
+                    )
+                  ) : (
+                    <>Primeiro mês registrado. Continue adicionando transações!</>
+                  )}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Budget Progress Insight */}
+        <Card className="shadow-sm border-none bg-white dark:bg-card overflow-hidden">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/80 to-primary text-white shadow-sm shrink-0">
+                  <Wallet className="w-4 h-4" />
+                </div>
+                <span className="text-sm font-bold text-foreground">Orçamento Mensal</span>
+              </div>
+              <span className="text-xs font-bold text-muted-foreground">
+                {formatCurrency(insights.budgetUsed)} / {formatCurrency(insights.monthlyBudget)}
+              </span>
+            </div>
+            <div className="relative h-2 w-full bg-secondary rounded-full overflow-hidden">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all duration-1000 ease-out",
+                  insights.budgetPercent >= 90
+                    ? "bg-gradient-to-r from-red-400 to-red-500"
+                    : insights.budgetPercent >= 70
+                      ? "bg-gradient-to-r from-orange-400 to-amber-500"
+                      : "bg-gradient-to-r from-primary/70 to-primary"
+                )}
+                style={{ width: `${insights.budgetPercent}%` }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Category Insight */}
+        {insights.topCategory && (
+          <Card className="shadow-sm border-none bg-white dark:bg-card overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className={cn("p-2.5 rounded-xl text-white shadow-sm shrink-0", insights.topCategory.color)}>
+                  <insights.topCategory.icon className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-foreground">Maior gasto: {insights.topCategory.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Categoria com mais despesas neste mês
+                  </p>
+                </div>
+                <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 ml-auto" />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </section>
       {/* Recent Transactions */}
       <section className="space-y-4 pt-4">
         <div className="flex justify-between items-center px-1">

@@ -15,7 +15,7 @@ import { ptBR } from "date-fns/locale";
 interface TransactionModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (transaction: Omit<Transaction, "id">) => void;
+  onSave: (transaction: Omit<Transaction, "id">) => Promise<void> | void;
 }
 
 export function TransactionModal({ isOpen, onOpenChange, onSave }: TransactionModalProps) {
@@ -48,17 +48,26 @@ export function TransactionModal({ isOpen, onOpenChange, onSave }: TransactionMo
 
   const amountValue = amountCents ? parseInt(amountCents, 10) / 100 : 0;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amountCents || !selectedCategory) return;
 
-    onSave({
-      amount: amountValue,
-      description: description || selectedCategory.name,
-      categoryId: selectedCategory.id,
-      date: date.toISOString(),
-      type,
-    });
+    try {
+      await onSave({
+        amount: amountValue,
+        description: description || selectedCategory.name,
+        categoryId: selectedCategory.id,
+        date: date.toISOString(),
+        type,
+      });
+    } catch (error) {
+      toast({
+        title: "Falha ao salvar",
+        description: error instanceof Error ? error.message : "Tente novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     toast({
       title: "Salvo ✅",
