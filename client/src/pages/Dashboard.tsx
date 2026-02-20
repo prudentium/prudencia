@@ -18,9 +18,10 @@ interface DashboardProps {
   transactions: Transaction[];
   userName?: string;
   userAvatarUrl?: string;
+  monthlyBudget?: number;
 }
 
-export default function Dashboard({ transactions, userName, userAvatarUrl }: DashboardProps) {
+export default function Dashboard({ transactions, userName, userAvatarUrl, monthlyBudget = 5000 }: DashboardProps) {
   const displayName = userName?.trim() || "Jane";
   const initials = displayName
     .split(" ")
@@ -57,7 +58,6 @@ export default function Dashboard({ transactions, userName, userAvatarUrl }: Das
       .filter(t => t.type === "expense" && new Date(t.date) >= lastMonthStart && new Date(t.date) <= lastMonthEnd)
       .reduce((acc, t) => acc + t.amount, 0);
 
-    const monthlyBudget = 5000;
     const budgetUsed = thisMonthExpenses;
     const budgetPercent = Math.min(Math.round((budgetUsed / monthlyBudget) * 100), 100);
 
@@ -79,8 +79,8 @@ export default function Dashboard({ transactions, userName, userAvatarUrl }: Das
     const topCategoryId = Object.entries(categorySpending).sort((a, b) => b[1] - a[1])[0]?.[0];
     const topCategory = topCategoryId ? getCategory(topCategoryId) : null;
 
-    return { thisMonthExpenses, lastMonthExpenses, savingsPercent, isSaving, monthlyBudget, budgetUsed, budgetPercent, topCategory };
-  }, [transactions]);
+    return { thisMonthExpenses, lastMonthExpenses, savingsPercent, isSaving, budgetUsed, budgetPercent, topCategory };
+  }, [transactions, monthlyBudget]);
 
   return (
     <div className="space-y-4 pb-24 animate-in fade-in duration-500 max-w-lg mx-auto">
@@ -187,10 +187,10 @@ export default function Dashboard({ transactions, userName, userAvatarUrl }: Das
                 <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/80 to-primary text-white shadow-sm shrink-0">
                   <Wallet className="w-4 h-4" />
                 </div>
-                <span className="text-sm font-bold text-foreground">Orçamento Mensal</span>
+                <span className="text-sm font-bold text-foreground">Limite de Gastos</span>
               </div>
               <span className="text-xs font-bold text-muted-foreground">
-                {formatCurrency(insights.budgetUsed)} / {formatCurrency(insights.monthlyBudget)}
+                {formatCurrency(insights.budgetUsed)} / {formatCurrency(monthlyBudget)}
               </span>
             </div>
             <div className="relative h-2 w-full bg-secondary rounded-full overflow-hidden">

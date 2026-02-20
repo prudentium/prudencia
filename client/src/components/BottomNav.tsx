@@ -12,7 +12,7 @@ export function BottomNav({ onOpenNewTransaction }: BottomNavProps) {
 
   const navItems = [
     { href: "/", icon: Home, label: "Início" },
-    { href: "/transactions", icon: List, label: "Lista" },
+    { href: "/transactions", icon: List, label: "Transações" },
     { href: "/categories", icon: PieChart, label: "Categorias" },
     { href: "/settings", icon: Settings, label: "Ajustes" },
   ];
@@ -31,7 +31,7 @@ export function BottomNav({ onOpenNewTransaction }: BottomNavProps) {
                 )}
               >
                 <item.icon strokeWidth={isActive ? 2.5 : 2} className="w-6 h-6" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-center leading-none">{item.label}</span>
               </div>
             </Link>
           );
@@ -51,7 +51,7 @@ export function BottomNav({ onOpenNewTransaction }: BottomNavProps) {
                 )}
               >
                 <item.icon strokeWidth={isActive ? 2.5 : 2} className="w-6 h-6" />
-                <span className="text-[10px] font-bold uppercase tracking-widest">{item.label}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-center leading-none">{item.label}</span>
               </div>
             </Link>
           );

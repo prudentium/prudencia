@@ -10,11 +10,21 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 interface SettingsProps {
   userName?: string;
   userEmail?: string;
+  userAvatarUrl?: string;
+  monthlyBudget?: number;
+  onOpenBudget?: () => void;
   onLogout?: () => void | Promise<void>;
 }
 
-export default function Settings({ userName, userEmail, onLogout }: SettingsProps) {
+export default function Settings({ userName, userEmail, userAvatarUrl, monthlyBudget, onOpenBudget, onLogout }: SettingsProps) {
   const displayName = userName?.trim() || "Jane Doe";
+  const initials = displayName
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const avatarSrc = userAvatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(displayName)}`;
 
   return (
     <div className="space-y-6 pb-24 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -27,8 +37,8 @@ export default function Settings({ userName, userEmail, onLogout }: SettingsProp
       <Card className="border-none shadow-soft bg-secondary/30">
         <CardContent className="p-4 flex items-center gap-4">
           <Avatar className="h-14 w-14 border-2 border-background shadow-md shrink-0">
-            <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>JD</AvatarFallback>
+            <AvatarImage src={avatarSrc} alt={displayName} />
+            <AvatarFallback className="bg-primary/10 text-primary font-bold">{initials}</AvatarFallback>
           </Avatar>
           <div className="flex flex-col gap-0.5 min-w-0">
             <h2 className="text-base font-bold leading-tight">{displayName}</h2>
@@ -45,14 +55,21 @@ export default function Settings({ userName, userEmail, onLogout }: SettingsProp
           <h3 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest ml-1">Controle Financeiro</h3>
           <Card className="border-none shadow-soft overflow-hidden">
             <div className="divide-y divide-border/40">
-              <div className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer">
+              <div
+                className="p-4 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer active:scale-[0.99]"
+                onClick={onOpenBudget}
+              >
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-600">
                     <PiggyBank className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-sm font-semibold block">Orçamento do mês</span>
-                    <span className="text-[10px] text-muted-foreground">R$ 3.500,00 definido</span>
+                    <span className="text-sm font-semibold block">Limite de gastos</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {monthlyBudget != null
+                        ? `R$ ${monthlyBudget.toLocaleString("pt-BR", { minimumFractionDigits: 2 })} definido`
+                        : "Toque para definir"}
+                    </span>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground/50" />

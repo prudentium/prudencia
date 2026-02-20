@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Drawer } from "vaul";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,9 @@ interface TransactionModalProps {
 
 export function TransactionModal({ isOpen, onOpenChange, onSave }: TransactionModalProps) {
   const [type, setType] = useState<TransactionType>("expense");
+  const formRef = useRef<HTMLFormElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const descriptionRef = useRef<HTMLInputElement>(null);
 
   const categories = type === "income" ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
   const [amountCents, setAmountCents] = useState("");
@@ -83,15 +86,42 @@ export function TransactionModal({ isOpen, onOpenChange, onSave }: TransactionMo
     onOpenChange(false);
   };
 
+  const handleConfirmPointerDown = () => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement) {
+      active.blur();
+    }
+    formRef.current?.requestSubmit();
+  };
+
+  const handleDescriptionFocus = () => {
+    setTimeout(() => {
+      const container = scrollAreaRef.current;
+      const input = descriptionRef.current;
+      if (!container || !input) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const inputRect = input.getBoundingClientRect();
+      const topLimit = containerRect.top + 16;
+      const bottomLimit = containerRect.bottom - 170;
+
+      if (inputRect.bottom > bottomLimit) {
+        container.scrollTop += inputRect.bottom - bottomLimit;
+      } else if (inputRect.top < topLimit) {
+        container.scrollTop -= topLimit - inputRect.top;
+      }
+    }, 40);
+  };
+
   return (
-    <Drawer.Root open={isOpen} onOpenChange={onOpenChange}>
+    <Drawer.Root open={isOpen} onOpenChange={onOpenChange} shouldScaleBackground={false} repositionInputs={false}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm" />
-        <Drawer.Content className="bg-background flex flex-col rounded-t-[32px] h-[92vh] mt-24 fixed bottom-0 left-0 right-0 z-50 outline-none shadow-2xl">
-          <div className="p-6 bg-background rounded-t-[32px] flex-1 overflow-y-auto">
+        <Drawer.Content className="bg-background flex flex-col rounded-t-[32px] fixed inset-x-0 bottom-0 top-6 z-50 outline-none shadow-2xl max-h-[100dvh]">
+          <div ref={scrollAreaRef} className="p-6 bg-background rounded-t-[32px] flex-1 overflow-y-auto pb-32">
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-muted mb-10" />
             
-            <form onSubmit={handleSubmit} className="space-y-10 max-w-md mx-auto pb-8">
+            <form ref={formRef} onSubmit={handleSubmit} className="space-y-10 max-w-md mx-auto pb-8">
               <div className="flex justify-center">
                 <div className="bg-secondary/50 p-1.5 rounded-2xl flex w-full">
                   <button
@@ -135,7 +165,6 @@ export function TransactionModal({ isOpen, onOpenChange, onSave }: TransactionMo
                         type="text"
                         inputMode="numeric"
                         placeholder="0,00"
-                        autoFocus
                         className="absolute inset-0 w-full bg-transparent border-none outline-none text-center font-black text-4xl md:text-5xl placeholder:text-muted-foreground/15 text-foreground"
                         value={formatAmountDisplay(amountCents)}
                         onChange={handleAmountChange}
@@ -214,9 +243,11 @@ export function TransactionModal({ isOpen, onOpenChange, onSave }: TransactionMo
               <div className="space-y-4">
                 <Label className="text-muted-foreground text-[10px] uppercase tracking-[0.2em] font-black ml-1">Mais Detalhes</Label>
                 <Input
+                  ref={descriptionRef}
                   placeholder="O que você comprou?"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
+                  onFocus={handleDescriptionFocus}
                   className="bg-secondary/30 border-none rounded-2xl h-14 px-6 font-medium placeholder:text-muted-foreground/40"
                 />
               </div>
@@ -231,9 +262,10 @@ export function TransactionModal({ isOpen, onOpenChange, onSave }: TransactionMo
                   Cancelar
                 </Button>
                 <Button 
-                  type="submit" 
+                  type="button"
                   className="flex-[2] h-16 rounded-3xl text-lg font-black shadow-premium active:scale-95 transition-transform"
                   disabled={!amountCents || !selectedCategory}
+                  onPointerDown={handleConfirmPointerDown}
                 >
                   Confirmar
                 </Button>

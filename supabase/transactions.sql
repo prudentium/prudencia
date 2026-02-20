@@ -157,3 +157,42 @@ insert into public.user_settings (user_id)
 select u.id
 from auth.users u
 on conflict (user_id) do nothing;
+
+-- LIMPEZA DIÁRIA DE CONTAS NÃO CONFIRMADAS (24h)
+create extension if not exists pg_cron;
+
+create or replace function public.delete_unconfirmed_users_older_than_24h()
+returns integer
+language plpgsql
+security definer
+set search_path = auth, public
+as $$
+declare
+  deleted_count integer;
+begin
+  delete from auth.users
+  where email_confirmed_at is null
+    and created_at < now() - interval '24 hours';
+
+  get diagnostics deleted_count = row_count;
+  return deleted_count;
+end;
+$$;
+
+do $$
+begin
+  if exists (
+    select 1
+    from cron.job
+    where jobname = 'delete-unconfirmed-users-daily'
+  ) then
+    perform cron.unschedule('delete-unconfirmed-users-daily');
+  end if;
+end;
+$$;
+
+select cron.schedule(
+  'delete-unconfirmed-users-daily',
+  '0 3 * * *',
+  $$select public.delete_unconfirmed_users_older_than_24h();$$
+);

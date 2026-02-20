@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -8,12 +8,14 @@ import Dashboard from "@/pages/Dashboard";
 import Transactions from "@/pages/Transactions";
 import Categories from "@/pages/Categories";
 import Settings from "@/pages/Settings";
+import BudgetSettings from "@/pages/BudgetSettings";
 import Auth from "@/pages/Auth";
 import { BottomNav } from "@/components/BottomNav";
 import { TransactionModal } from "@/components/TransactionModal";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Transaction } from "@/lib/mockData";
 import { createTransaction, loadTransactions, removeTransaction } from "@/lib/transactionsStore";
+import { loadBudget, saveBudget } from "@/lib/budgetStore";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { Session } from "@supabase/supabase-js";
 
@@ -22,8 +24,10 @@ function Router() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(true);
+  const [monthlyBudget, setMonthlyBudget] = useState<number>(5000);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [, navigate] = useLocation();
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
@@ -78,6 +82,20 @@ function Router() {
       mounted = false;
     };
   }, [session]);
+
+  useEffect(() => {
+    if (!session) return;
+    let mounted = true;
+    loadBudget().then((val) => {
+      if (mounted) setMonthlyBudget(val);
+    }).catch(console.error);
+    return () => { mounted = false; };
+  }, [session]);
+
+  const handleSaveBudget = useCallback(async (value: number) => {
+    await saveBudget(value);
+    setMonthlyBudget(value);
+  }, []);
 
   const handleLogout = async () => {
     if (!supabase) return;
@@ -144,7 +162,7 @@ function Router() {
           ) : (
           <Switch>
             <Route path="/">
-              <Dashboard transactions={transactions} userName={userName} userAvatarUrl={userAvatarUrl} />
+              <Dashboard transactions={transactions} userName={userName} userAvatarUrl={userAvatarUrl} monthlyBudget={monthlyBudget} />
             </Route>
             <Route path="/transactions">
               <Transactions transactions={transactions} onDelete={handleDeleteTransaction} />
@@ -153,7 +171,22 @@ function Router() {
               <Categories transactions={transactions} />
             </Route>
             <Route path="/settings">
-              <Settings onLogout={handleLogout} userName={userName} userEmail={session.user.email ?? ""} />
+              <Settings
+                onLogout={handleLogout}
+                userName={userName}
+                userEmail={session.user.email ?? ""}
+                userAvatarUrl={userAvatarUrl}
+                monthlyBudget={monthlyBudget}
+                onOpenBudget={() => navigate("/settings/budget")}
+              />
+            </Route>
+            <Route path="/settings/budget">
+              <BudgetSettings
+                currentBudget={monthlyBudget}
+                transactions={transactions}
+                onSave={handleSaveBudget}
+                onBack={() => navigate("/settings")}
+              />
             </Route>
             <Route component={NotFound} />
           </Switch>

@@ -9,6 +9,18 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "@/hooks/use-toast";
 
 type AuthMode = "login" | "signup";
+const EMAIL_FORMAT_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const ALLOWED_EMAIL_DOMAINS = new Set([
+  "gmail.com",
+  "outlook.com",
+  "hotmail.com",
+  "live.com",
+  "icloud.com",
+  "me.com",
+  "yahoo.com",
+]);
+
+const normalizeEmail = (value: string) => value.trim().toLowerCase();
 
 export default function Auth() {
   const [mode, setMode] = useState<AuthMode>("login");
@@ -23,12 +35,42 @@ export default function Auth() {
     e.preventDefault();
     if (!supabase) return;
 
+    const normalizedEmail = normalizeEmail(email);
+    const emailDomain = normalizedEmail.split("@")[1] ?? "";
+
+    if (isSignup && !EMAIL_FORMAT_REGEX.test(normalizedEmail)) {
+      toast({
+        title: "E-mail inválido",
+        description: "Use um e-mail válido no formato nome@provedor.com.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isSignup && !ALLOWED_EMAIL_DOMAINS.has(emailDomain)) {
+      toast({
+        title: "Provedor não permitido",
+        description: "Use um e-mail pessoal (Gmail, Outlook, iCloud e similares).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isSignup && /\s/.test(password)) {
+      toast({
+        title: "Senha inválida",
+        description: "A senha não pode conter espaços.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       if (isSignup) {
         const { error } = await supabase.auth.signUp({
-          email,
+          email: normalizedEmail,
           password,
           options: {
             data: {
@@ -45,7 +87,7 @@ export default function Auth() {
         });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: normalizedEmail,
           password,
         });
 
