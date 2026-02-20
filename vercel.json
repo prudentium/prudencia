@@ -2,7 +2,7 @@
   "framework": "vite",
   "installCommand": "npm install",
   "buildCommand": "npm run build:frontend",
-  "outputDirectory": "dist/public",
+  "outputDirectory": "public",
   "rewrites": [
     {
       "source": "/(.*)",
